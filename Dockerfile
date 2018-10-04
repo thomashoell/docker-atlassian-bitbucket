@@ -9,7 +9,7 @@ ENV MYSQL_CONNECTOR_VERSION 5.1.47
 # Install Atlassian Bitbucket and helper tools and setup initial home
 # directory structure.
 RUN set -x \
-    && apk --no-cache add git curl bash ttf-dejavu libc6-compat \
+    && apk --no-cache add git curl bash ttf-dejavu libc6-compat procps \
     && mkdir -p               "${BITBUCKET_HOME}/shared" \
     && touch                  "${BITBUCKET_HOME}/shared/bitbucket.properties" \
     && chmod -R 700           "${BITBUCKET_HOME}" \
