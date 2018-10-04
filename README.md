@@ -23,6 +23,22 @@ docker run --detach --publish 7990:7990 cptactionhank/atlassian-bitbucket:latest
 
 Then simply navigate your preferred browser to `http://[dockerhost]:7990` and finish the configuration.
 
+## Configuration
+
+You can configure a small set of things by supplying the following environment variables
+
+| Environment Variable   | Description |
+| ---------------------- | ----------- |
+| X_PATH                 | Sets the Tomcat connectors `path` attribute |
+| X_CROWD_SSO            | Set to `true` to enable SSO via Atlassian Crowd
+
+## How to enable SSO via Crowd
+
+Setting X_CROWD_SSO to `true` will enable Crowd SSO in your bitbucket.properties.
+You will have to put your `crowd-properties.conf` to `${BITBUCKET_HOME}/shared` and set up the user directory in Bitbucket.
+
+See the [official Documentation](https://confluence.atlassian.com/bitbucketserver/connecting-bitbucket-server-to-crowd-776640399.html) for more information.
+
 ## Contributions
 
 This image has been created with the best intentions and an expert understanding of docker, but it should not be expected to be flawless. Should you be in the position to do so, I request that you help support this repository with best-practices and other additions.

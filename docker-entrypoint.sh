@@ -1,25 +1,33 @@
 #!/bin/bash
 
-# check if the `server.xml` file has been changed since the creation of this
-# Docker image. If the file has been changed the entrypoint script will not
-# perform modifications to the configuration file.
-if [ "$(stat --format "%Y" "${BITBUCKET_INSTALL}/conf/server.xml")" -eq "0" ]; then
-  if [ -n "${X_PROXY_NAME}" ]; then
-    xmlstarlet ed --inplace --pf --ps --insert '//Connector[@port="7990"]' --type "attr" --name "proxyName" --value "${X_PROXY_NAME}" "${BITBUCKET_INSTALL}/conf/server.xml"
+set -e -o pipefail
+
+BITBUCKET_PROPERTIES="${BITBUCKET_HOME}/shared/bitbucket.properties"
+
+mkdir -p "${BITBUCKET_HOME}/shared"
+touch ${BITBUCKET_PROPERTIES}
+
+function add_or_set_property {
+  PROPERTY=$1
+  VALUE=$2
+
+  if [ $(egrep "^\w*${PROPERTY}\s*=\s*.*" ${BITBUCKET_PROPERTIES}) ]; then
+    sed -i "s#\(^\w*${PROPERTY}\s*=\s*\)\(.*\)#\1${VALUE}#g" ${BITBUCKET_PROPERTIES}
+  else
+    echo -e "\n${PROPERTY}=${VALUE}" >> ${BITBUCKET_PROPERTIES}
   fi
-  if [ -n "${X_PROXY_PORT}" ]; then
-    xmlstarlet ed --inplace --pf --ps --insert '//Connector[@port="7990"]' --type "attr" --name "proxyPort" --value "${X_PROXY_PORT}" "${BITBUCKET_INSTALL}/conf/server.xml"
+}
+
+if [ -n "${X_CROWD_SSO}" ]; then
+  if [ "${X_CROWD_SSO}" == "true" ]; then
+    add_or_set_property 'plugin.auth-crowd.sso.enabled' 'true'
+  else
+    add_or_set_property 'plugin.auth-crowd.sso.enabled' 'false'
   fi
-  if [ -n "${X_PROXY_SCHEME}" ]; then
-    xmlstarlet ed --inplace --pf --ps --insert '//Connector[@port="7990"]' --type "attr" --name "scheme" --value "${X_PROXY_SCHEME}" "${BITBUCKET_INSTALL}/conf/server.xml"
-  fi
-  if [ "${X_PROXY_SCHEME}" = "https" ]; then
-    xmlstarlet ed --inplace --pf --ps --insert '//Connector[@port="7990"]' --type "attr" --name "secure" --value "true" "${BITBUCKET_INSTALL}/conf/server.xml"
-    xmlstarlet ed --inplace --pf --ps --update '//Connector[@port="7990"]/@redirectPort' --value "${X_PROXY_PORT}" "${BITBUCKET_INSTALL}/conf/server.xml"
-  fi
-  if [ -n "${X_PATH}" ]; then
-    xmlstarlet ed --inplace --pf --ps --update '//Context/@path' --value "${X_PATH}" "${BITBUCKET_INSTALL}/conf/server.xml"
-  fi
+fi
+
+if [ -n "${X_PATH}" ]; then
+  add_or_set_property 'server.context-path' "${X_PATH}"
 fi
 
 exec "$@"
